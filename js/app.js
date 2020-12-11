@@ -15,16 +15,16 @@ var canvas = d3.select("#chart")
 
 		
 					
-d3.csv("../data/prueba.csv", d3.autoType, function(data){
+d3.csv("../data/SpotifyFeatures.csv", d3.autoType, function(data){
 	var groups = _.countBy(data, "genre");
 
-	// var groups = d3.nest()
-	// 	.key(function(d) { return d.genre; })
-	// 	  .entries(data);
-	// 	  console.log(group);
+	var data_group = Object.keys(groups).map(group => {
+		const aux = {};
+		aux.genre = group;
+		aux.count = groups[group];
+		return aux
+	});
 
-	// var groups = d3.group(data, d => d.genre)
-	// console.log(groups);
 
 	var x = d3.scaleBand()
 		.range([0, width])
@@ -41,20 +41,21 @@ d3.csv("../data/prueba.csv", d3.autoType, function(data){
 
 	var y = d3.scaleLinear()
 			.domain([0, d3.max(_.map(groups, d => {return d}))])
-			.range([ height, 0]);
+			.range([height, 0]);
 
 	canvas.append("g")
 		.call(d3.axisLeft(y));
 
+	console.log(data_group);
 	canvas.selectAll("mybar")
-		.data(groups)
+		.data(data_group)
 		.enter()
 		.append("rect")
-			.attr("x", (d) => { return x(Object.keys(d)); })
-			.attr("y", (d) => { return y(Object.values(d)); })
+			.attr("x", (d) => { return x(d.genre); })
+			.attr("y", (d) => { return y(d.count); })
 			.attr("width", x.bandwidth())
-			.attr("height", function(d) { return height - y(Object.values(d)); })
-			.attr("fill", "#69b3a2");
+			.attr("height", (d) => { return height - y(d.count); })
+			.attr("fill", "#BC96E6");
 });
 
 
