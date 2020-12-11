@@ -13,15 +13,21 @@ var canvas = d3.select("#chart")
 				.attr("transform",
 					"translate(" + margin.left + "," + margin.top + ")");
 
-					
-					
+		
 					
 d3.csv("../data/prueba.csv", d3.autoType, function(data){
 	var groups = _.countBy(data, "genre");
 
+	// var groups = d3.nest()
+	// 	.key(function(d) { return d.genre; })
+	// 	  .entries(data);
+	// 	  console.log(group);
+
+	// var groups = d3.group(data, d => d.genre)
+	// console.log(groups);
 
 	var x = d3.scaleBand()
-		.range([ 0, width ])
+		.range([0, width])
 		.domain(_.map(data, d => {return d.genre}))
 		.padding(0.2);
 	
@@ -40,18 +46,14 @@ d3.csv("../data/prueba.csv", d3.autoType, function(data){
 	canvas.append("g")
 		.call(d3.axisLeft(y));
 
-
-	
-	console.log(groups);
-
 	canvas.selectAll("mybar")
 		.data(groups)
 		.enter()
 		.append("rect")
-			.attr("x", (d) => { return d.genre; })
-			.attr("y", (d) => { return d; })
+			.attr("x", (d) => { return x(Object.keys(d)); })
+			.attr("y", (d) => { return y(Object.values(d)); })
 			.attr("width", x.bandwidth())
-			.attr("height", function(d) { return height - y(d); })
+			.attr("height", function(d) { return height - y(Object.values(d)); })
 			.attr("fill", "#69b3a2");
 });
 
