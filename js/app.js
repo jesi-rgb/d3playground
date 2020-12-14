@@ -20,9 +20,17 @@ const key_canvas = d3.select("#key_hist")
                     .append("g")
                     .attr("transform",
                         "translate(" + margin.left + "," + margin.top + ")");
+
+const avg_dur_canvas = d3.select("#avg_dur_hist")
+                        .append("svg")
+                        .attr("width", width + margin.left + margin.right)
+                        .attr("height", height + margin.top + margin.bottom)
+                        .append("g")
+                        .attr("transform",
+                            "translate(" + margin.left + "," + margin.top + ")");
         
                     
-d3.csv("../data/SpotifyFeatures.csv", d3.autoType, function(data){
+d3.csv("../data/spoty_short.csv", d3.autoType, function(data){
     
     // GENRE CANVAS //
     const g_groups = _.countBy(data, "genre");
@@ -34,7 +42,7 @@ d3.csv("../data/SpotifyFeatures.csv", d3.autoType, function(data){
         return aux
     });
 
-    const sorted = _.sortBy(data_group, 'count');
+    const sorted = _.sortBy(data_group, "count");
 
 
     const xGenre = d3.scaleBand()
@@ -86,11 +94,12 @@ d3.csv("../data/SpotifyFeatures.csv", d3.autoType, function(data){
         return aux
     });
 
-    const k_sorted = _.sortBy(keys_data_group, 'count');
+    const k_sorted = _.sortBy(keys_data_group, "count");
+
 
     const xKeys = d3.scaleBand()
         .range([0, width])
-        .domain(_.map(k_sorted, d => {return d.key}))
+        .domain(k_sorted.map(d => d.key))
         .padding(0.2);
 
     const scaleColorK = d3.scaleLinear()
@@ -124,31 +133,65 @@ d3.csv("../data/SpotifyFeatures.csv", d3.autoType, function(data){
                 .attr("fill", (d) => {return scaleColorK(d.count)});
 
 
-    // MEAN DURATION PER GENRE //
-    const d_groups = _.groupBy(data, 'genre');
-    
-    // const duration_means = Object.keys(d_groups).map(group => {
-    //     const aux = {};
-    //     aux.genre = group;
+    // Bubbles //
 
-    //     console.log(d_groups);
-
-    // })
-
-    const durations_group = Object.keys(d_groups).map(group => {
+    const props = data.map(d => {
         const aux = {};
+        aux.genre = d.genre;
+        aux.loudness = +d.loudness;
+        aux.duration_ms = +d.duration_ms;
+        return aux;
+    })
 
-        aux.genre = group;
 
-        let avg_durations = d3.mean(d_groups[group].map(d => d.duration_ms))
-        aux.duration_ms = avg_durations;
-        
-        return aux
-    });
+    const xAvgDuration = d3.scaleBand()
+                        .domain(props.map(d => d.genre))
+                        .range([0, width])
+                        .padding(1);
+
     
-    console.log(durations_group);
+
+    avg_dur_canvas.append("g")
+                    .attr("transform", "translate(" + 0 + "," + height + ")")
+                    .call(d3.axisBottom(xAvgDuration))
+                    .selectAll("text")
+                    .attr("transform", "translate(-13,10)rotate(-90)")
+                    .style("text-anchor", "end");
 
     
+
+    const yAvgDuration = d3.scaleLinear()
+                        .domain([d3.min(props.map(d => d.loudness)), 0])
+                        .range([height, 0]);
+
+    avg_dur_canvas.append("g")
+                    .call(d3.axisLeft(yAvgDuration));
+
+    
+    
+    const sizeAvgDuration = d3.scaleLinear()
+                            .domain([0, d3.max(props.map(d => d.duration_ms))])
+                            .range([3, 20])
+
+    const alphaScaler = d3.scaleLinear()
+                        .domain([0, d3.max(props.map(d => d.duration_ms))])
+                        .range([0, 1])
+
+
+                                console.log(d3.min(props.map(d => d.duration_ms)));
+    avg_dur_canvas.selectAll("circles")
+                    .data(props)
+                    .enter()
+                    .append("circle")
+                    .attr("cx", (d) => {return xAvgDuration(d.genre);})
+                    .attr("cy", (d) => {return yAvgDuration(d.loudness);})
+                    .attr('r', (d) => {return sizeAvgDuration(d.duration_ms)}) // 
+                    .attr("fill", "#BC96E6")
+                    .attr('opacity', d => {return alphaScaler(d.duration_ms)})
+                    .attr('stroke', "black")
+    
+    // console.log(avg_dur.map(d => yAvgDuration(d.duration_ms)));
+
 });
 
 
