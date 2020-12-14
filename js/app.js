@@ -25,12 +25,12 @@ const key_canvas = d3.select("#key_hist")
 d3.csv("../data/SpotifyFeatures.csv", d3.autoType, function(data){
     
     // GENRE CANVAS //
-    const groups = _.countBy(data, "genre");
+    const g_groups = _.countBy(data, "genre");
 
-    const data_group = Object.keys(groups).map(group => {
+    const data_group = Object.keys(g_groups).map(group => {
         const aux = {};
         aux.genre = group;
-        aux.count = groups[group];
+        aux.count = g_groups[group];
         return aux
     });
 
@@ -55,6 +55,10 @@ d3.csv("../data/SpotifyFeatures.csv", d3.autoType, function(data){
             .domain([0, d3.max(_.map(data_group, d => d.count))])
             .range([height, 0]);
 
+    const scaleColorG = d3.scaleLinear()
+                        .domain([0, d3.max(_.map(data_group, d => d.count))])
+                        .range(["#69b3a2", "#5B8FBA", "#BC96E6"])
+
 
 
     genre_canvas.append("g")
@@ -69,7 +73,7 @@ d3.csv("../data/SpotifyFeatures.csv", d3.autoType, function(data){
             .attr("y", (d) => { return yGenre(d.count); })
             .attr("width", xGenre.bandwidth())
             .attr("height", (d) => { return height - yGenre(d.count); })
-            .attr("fill", "#BC96E6");
+            .attr("fill", (d) => {return scaleColorG(d.count); });
 
 
     // KEY CANVAS //
@@ -83,24 +87,20 @@ d3.csv("../data/SpotifyFeatures.csv", d3.autoType, function(data){
     });
 
     const k_sorted = _.sortBy(keys_data_group, 'count');
-    console.log(k_sorted);
 
     const xKeys = d3.scaleBand()
         .range([0, width])
         .domain(_.map(k_sorted, d => {return d.key}))
         .padding(0.2);
 
-    const scaleColor = d3.scaleLinear()
+    const scaleColorK = d3.scaleLinear()
                         .domain([0, d3.max(_.map(keys_data_group, d => d.count))])
-                        .range(["#69b3a2", "#BC96E6"])
+                        .range(["#69b3a2", "#5B8FBA", "#BC96E6"])
     
 
     key_canvas.append("g")
             .attr("transform", "translate(0," + height + ")")
             .call(d3.axisBottom(xKeys))
-            .selectAll("text")
-            .attr("transform", "translate(-13,10)rotate(-90)")
-            .style("text-anchor", "end");
 
 
     const yKeys = d3.scaleLinear()
@@ -121,7 +121,33 @@ d3.csv("../data/SpotifyFeatures.csv", d3.autoType, function(data){
                 .attr("y", (d) => { return yKeys(d.count); })
                 .attr("width", xKeys.bandwidth())
                 .attr("height", (d) => { return height - yKeys(d.count); })
-                .attr("fill", (d) => {return scaleColor(d.count)});
+                .attr("fill", (d) => {return scaleColorK(d.count)});
+
+
+    // MEAN DURATION PER GENRE //
+    const d_groups = _.groupBy(data, 'genre');
+    
+    // const duration_means = Object.keys(d_groups).map(group => {
+    //     const aux = {};
+    //     aux.genre = group;
+
+    //     console.log(d_groups);
+
+    // })
+
+    const durations_group = Object.keys(d_groups).map(group => {
+        const aux = {};
+
+        aux.genre = group;
+
+        let avg_durations = d3.mean(d_groups[group].map(d => d.duration_ms))
+        aux.duration_ms = avg_durations;
+        
+        return aux
+    });
+    
+    console.log(durations_group);
+
     
 });
 
